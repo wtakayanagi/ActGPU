@@ -13,7 +13,7 @@ var getEnv = function() {
 		Block: function (t, env) {
 			getEnv(t.statements, env);
 		},
-		Actor: function (t, env) {
+		ActorDeclaration: function (t, env) {
 			var name = t.name;
 			var basic = { fields: {}, methods: {} };
 			var environments = {
@@ -105,6 +105,7 @@ var getEnv = function() {
 	return G;
 }();
 
+
 var token_maker = function(N) { return '\"' + N + '\" !identifier_part { return \"' + N + '\"; }' };
 var codeToFile = function (filename, code) {
 	var fd = fs.openSync(filename, 'w');
@@ -126,12 +127,12 @@ fs.readFile(argv[2], 'utf8',
 		}
 		getEnv(tree, environments);
 
-		//util.print(JSON.stringify(environments.basic_info, null, 2));
-		//util.print(JSON.stringify(environments.actor_name_list, null, 2));
-		//util.print(JSON.stringify(environments.rename_actor_tree, null, 2));
+		util.print(JSON.stringify(environments.basic_info, null, 2));
+		util.print(JSON.stringify(environments.actor_name_list, null, 2));
+		util.print(JSON.stringify(environments.rename_actor_tree, null, 2));
 		
 		var pegjs_code = './add1_b.pegjs';
-		var actor_token = ["actor_token", "\n    = "];
+		var actor_token = ["actor_name_token", "\n    = "];
 		environments.actor_name_list.forEach(
 			function (t) {
 		   	actor_token.push(token_maker(t)); 

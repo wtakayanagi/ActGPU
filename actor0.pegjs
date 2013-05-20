@@ -8,7 +8,7 @@ program
 
 source_elements
 	= head:source_element tail:(__ source_element)* {
-		var result = [head];
+		var result = head !== "" ? [head] : [];
 		for (var i = 0, l = tail.length; i < l; i ++) {
 			var tmp = tail[i][1];
 			if (tmp !== "") result.push(tmp);
@@ -292,7 +292,7 @@ constructor_declaration
 actor_declaration
 	= actor_token __ name:identifier __ "{" __ elements:actor_elements? __ "}" EOS {
 		return {
-			type: "Actor",
+			type: "ActorDeclaration",
 			name: name,
 			elements: elements !== "" ? elements: []
 		};

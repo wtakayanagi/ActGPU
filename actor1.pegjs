@@ -8,7 +8,7 @@ program
 
 source_elements
 	= head:source_element tail:(__ source_element)* {
-		var result = [head];
+		var result = head !== "" ? [head] : [];
 		for (var i = 0, l = tail.length; i < l; i ++) {
 			var tmp = tail[i][1];
 			if (tmp !== "") result.push(tmp);
@@ -292,7 +292,7 @@ constructor_declaration
 actor_declaration
 	= actor_token __ name:identifier __ "{" __ elements:actor_elements? __ "}" EOS {
 		return {
-			type: "Actor",
+			type: "ActorDeclaration",
 			name: name,
 			elements: elements !== "" ? elements: []
 		};
@@ -559,22 +559,20 @@ unary_expression
 
 postfix_expression
 	= expression:primary_expression operation:(__ postfix_operation)* {
-		var result = {};
-		operation.length == 0
-		? result = expression
-		: result = {
-			type: "PostfixExpression",
-			base: expression,
-			operation: []
-		}
-		for (var i = 0, l = operation.length; i < l; i ++) {
-			result.operation.push(operation[i][1]);
-		}
-	}
+		var result = expression;
+		for (var i = 0; i < operation.length; ++i) {
+            result = {
+                type: "PostfixExpression",
+                base: expression,
+                operation: operation[i][1]
+            };
+        }
+        return result;
+    }
 
 primary_expression
 	= this_token
-	/ name:identifier { return { type: "Variable", name: name }; }
+	/ name:identifier_name { return { type: "Variable", name: name }; }
 	/ constant
 	/ "(" __ expression:expression __ ")" { return expression; }
 
@@ -617,7 +615,7 @@ argument_expression_list
 	}
 
 member_expression
-	= "." name:identifier {
+	= "." __ name:identifier_name {
 		return {
 			type: "PropertyAccess",
 			name: name
@@ -768,7 +766,7 @@ default_clause
 method_definition
 	= destructor_definition
 	/ constructor_definition
-	/ return_type:void_token __ actor_name:actor_token "::" method_name:identifier __
+	/ return_type:void_token __ actor_name:actor_name_token "::" method_name:identifier_name __
 	"(" __ params:method_parameter_list? __ ")" __
 	"{" __ elements:method_elements __ "}" __ {
 		return {
@@ -782,7 +780,7 @@ method_definition
 	}
 
 destructor_definition
-	= actor_name:actor_token "::~" identifier __
+	= actor_name:actor_name_token "::~" actor_name_token __
 	"(" __ params:method_parameter_list? __ ")" __
 	"{" __ elements:method_elements? __ "}" __ {
 		return {
@@ -794,7 +792,7 @@ destructor_definition
 	}
 
 constructor_definition
-	= actor_name:actor_token "::" identifier __
+	= actor_name:actor_name_token "::" actor_name_token __
 	"(" __ params:method_parameter_list? __ ")" __
 	"{" __ elements:method_elements? __ "}" __ {
 		return {
@@ -843,7 +841,7 @@ actor_declaration
 		};
 	}
 
-actor_token
+actor_name_token
     = "result" !identifier_part { return "result"; }
     / "fibonacci" !identifier_part { return "fibonacci"; }
     / "add" !identifier_part { return "add"; }
