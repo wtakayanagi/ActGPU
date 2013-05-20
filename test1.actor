@@ -1,0 +1,38 @@
+actor result{
+	int result;
+	void value(int n);
+};
+void result::value(int n) { this.result = n; }
+
+actor fibonacci{
+	int n; 
+	actor r;
+	fibonacci(int n, actor r);
+};
+fibonacci::fibonacci(int n, actor r) {
+	if (n < 2) r.value(1);
+	else {
+		add a(r);
+		fibonacci f1(n-1, a);
+		fibonacci f2(n-2, a);
+	}
+}
+
+actor add{
+	int result;
+	actor r;
+	add(actor r);
+	void value(int n);
+};
+add::add(actor r) { this.result = 0; this.r = r; }
+void add::value(int n) {
+	int answer = result;
+	result += n;
+	if (answer != 0) r.value(result);
+}
+
+int main(int argc, char** argv) {
+	int n = atoi(argv[1]);
+	result res(0);
+	fibonacci fib(n, res);
+}

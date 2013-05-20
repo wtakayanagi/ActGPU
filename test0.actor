@@ -1,0 +1,29 @@
+actor test{
+	{
+		int a, *b, c[10];
+		float d; // comment
+	}
+	test(int a, float d);
+	void func(int x, float y[]);
+};
+
+void main(int argc, char** argv) {
+	int n = atoi(argv[1]);
+	result res(0);
+	fibonacci fib(n, res);
+}
+
+
+class test1{
+	int p;
+};
+
+actor test2{};
+
+
+1+1;
+
+actor test3{
+	float result;
+};
+
