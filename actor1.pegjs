@@ -346,14 +346,13 @@ assignment_expression
 
 assignment_operator
 	= "="
+	/ "+="
+	/ "-="
 	/ "*="
 	/ "\/="
 	/ "%="
-	/ "+="
-	/ "-="
 	/ "<<="
 	/ ">>="
-	/ ">>>="
 	/ "&="
 	/ "^="
 	/ "|="
@@ -366,7 +365,7 @@ condition_expression
 	"?" __ true_expression:assignment_expression __
 	":" __ false_expression:assignment_expression {
 		return {
-			type: "condition_expression",
+			type: "ConditionExpression",
 			condition: condition,
 			true_expression: true_expression,
 			false_expression: false_expression
@@ -474,9 +473,7 @@ equality_expression
     }
 
 equality_operator
-	= "==="
-	/ "!=="
-	/ "=="
+	= "=="
 	/ "!="
 
 relational_expression
@@ -515,7 +512,6 @@ shift_expression
 
 shift_operator
 	= "<<"
-	/ ">>>"
 	/ ">>"
 
 additive_expression
@@ -558,17 +554,58 @@ unary_expression
 	/ prefix_expression
 
 postfix_expression
-	= expression:primary_expression operation:(__ postfix_operation)* {
+	= expression:lefthandside_expression __ operator:postfix_operator {
 		var result = expression;
 		for (var i = 0; i < operation.length; ++i) {
             result = {
                 type: "PostfixExpression",
-                base: expression,
-                operation: operation[i][1]
+				operator: operator,
+                expression: expression
             };
         }
         return result;
     }
+	/ lefthandside_expression
+
+lefthandside_expression
+	= call_expression
+	/ member_expression
+
+call_expression
+	= name:member_expression "(" __ arguments: argument_expression_list? __ ")" {
+		return {
+			type: "FunctionCall",
+			name: name,
+			arguments: arguments !== "" ? arguments : []
+		};
+	}
+
+argument_expression_list
+    = head:assignment_expression tail:(__ "," __ assignment_expression)* {
+		var result = [head];
+		for (var i = 0, l = tail.length; i < l; i ++) {
+			result.push(tail[i][3]);
+		}
+		return result;
+	}
+
+member_expression
+	= base:primary_expression
+	accessors:(
+		__ "[" __ name:expression __ "]" { return { type: "ArrayAccess", name: name }; }
+	  / __ "." __ name:identifier_name { return { type: "PropertyAccess", name: name }; }
+	  / __ "->" __ name:identifier_name { return { type: "PropertyAccess", name: name }; }
+	)* {
+		var result = base;
+		for (var i = 0, l = accessors.length; i < l; i ++) {
+			result = {
+				type: accessors[i].type,
+				base: result,
+				name: accessors[i].name
+			};
+		}
+		return result;
+	}
 
 primary_expression
 	= this_token
@@ -584,50 +621,16 @@ constant
 		};
 	}
 
-postfix_operation
-	= operator:postfix_operator { return { type: "PostfixOperator", operator: operator }; }
-	/ array_operator
-	/ call_expression
-	/ member_expression
-
 postfix_operator
 	= "++"
 	/ "--"
-
-array_operator
-	= "[" __ accessor:expression __ "]" { return { type: "ArrayAccess", expression:accessor }; }
-
-call_expression
-	= "(" __ arguments: argument_expression_list? __ ")" {
-		return {
-			type: "FunctionCall",
-			arguments: arguments !== "" ? arguments : []
-		};
-	}
-
-argument_expression_list
-    = head:assignment_expression tail:(__ "," __ assignment_expression)* {
-		var result = [head];
-		for (var i = 0, l = tail.length; i < l; i ++) {
-			result.push(tail[i][3]);
-		}
-		return result;
-	}
-
-member_expression
-	= "." __ name:identifier_name {
-		return {
-			type: "PropertyAccess",
-			name: name
-		};
-	}
 
 prefix_expression
 	= operator:prefix_operator expression: postfix_expression {
 		return {
 			type: "PrefixExpression",
-			base: expression,
-			operator: operator
+			operator: operator,
+			expression: expression
 		};
 	}
 
@@ -729,11 +732,15 @@ switch_statement
 	}
 
 case_block
-	= "{" __ before_clauses:case_clauses? default_clause:default_clause? after_clauses:case_clauses? __ "}" {
+	= "{" __ 
+	before_clauses:case_clauses? __ 
+	default_clause:default_clause? __ 
+	after_clauses:case_clauses? __ 
+	"}" {
 		var before_cs = before_clauses !== "" ? before_clauses : [];
-		var default_c = default_clause !== "" ? default_clause : null;
+		var default_c = default_clause !== "" ? [default_clause] : [];
 		var after_cs = after_clauses !== "" ? after_clauses : [];
-		return (default_c ? before_cs.concat(default_c) : before_cs).concat(after_cs);
+		return before_cs.concat(default_c).concat(after_cs);
 	}
 
 case_clauses
@@ -816,9 +823,10 @@ method_element
 	= statement
 
 actor_statement
-	= actor_token __ declarations:actor_declaration_list EOS {
+	= actor_type:actor_token __ declarations:actor_declaration_list EOS {
 		return {
 			type: "ActorStatement",
+			actor_type: actor_type,
 			declarations: declarations
 		};
 	}

@@ -1,8 +1,11 @@
 actor result{
 	int result;
+	result(int n);
 	void value(int n);
 };
-
+result::result(int n) {
+	this.result = n;
+}
 void result::value(int n) { 
 	this.result = n; 
 }
@@ -11,13 +14,17 @@ actor fibonacci{
 	int n; 
 	actor r;
 	fibonacci(int n, actor r);
+	void next();
 };
-fibonacci::fibonacci(int n, actor r) {
-	if (n < 2) r.value(1);
+fibonacci::fibonacci(int n, actor r) { this.n = n; this.r = r; }
+void fibonacci::next() {
+	if (n < 2) this.r.value(1);
 	else {
 		add a(r);
 		fibonacci f1(n-1, a);
+		f1.next();
 		fibonacci f2(n-2, a);
+		f2.next();
 	}
 }
 
@@ -31,7 +38,7 @@ add::add(actor r) { this.result = 0; this.r = r; }
 void add::value(int n) {
 	int answer = result;
 	result += n;
-	if (answer != 0) r.value(result);
+	if (answer != 0) this.r.value(result);
 }
 
 int main(int argc, char** argv) {
