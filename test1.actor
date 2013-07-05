@@ -1,48 +1,51 @@
-actor result{
+actor Result{
 	int result;
-	result(int n);
+	Result(int n);
 	void value(int n);
 };
-result::result(int n) {
-	this.result = n;
+Result::Result(int n) {
+	this->result = n;
 }
-void result::value(int n) { 
-	this.result = n; 
+void Result::value(int n) { 
+	this->result = n; 
 }
 
-actor fibonacci{
-	int n; 
+actor Add{
+	int result;
 	actor r;
-	fibonacci(int n, actor r);
-	void next();
+	Add(actor *r);
+	void value(int n);
 };
-fibonacci::fibonacci(int n, actor r) { this.n = n; this.r = r; }
-void fibonacci::next() {
-	if (n < 2) this.r.value(1);
-	else {
-		add a(r);
-		fibonacci f1(n-1, a);
-		f1.next();
-		fibonacci f2(n-2, a);
-		f2.next();
+Add::Add(actor *r) { this->result = 0; this->r = r; }
+void Add::value(int n) {
+	int answer = result;
+	result += n;
+	if (answer != 0) {
+		this->r->value(result);
+		delete this;
 	}
 }
 
-actor add{
-	int result;
-	actor r;
-	add(actor r);
-	void value(int n);
+actor Fibonacci{
+	int n; 
+	actor *r;
+	Fibonacci(int n, actor *r);
+	void next();
 };
-add::add(actor r) { this.result = 0; this.r = r; }
-void add::value(int n) {
-	int answer = result;
-	result += n;
-	if (answer != 0) this.r.value(result);
+Fibonacci::Fibonacci(int n, actor *r) { this->n = n; this->r = r; }
+void Fibonacci::next() {
+	if (n < 2) this->r->value(n);
+	else {
+		Add *a = new Add(r);
+		(new Fibonacci(n-1, a))->next();
+		(new Fibonacci(n-2, a))->next();
+	}
+	delete this;
 }
 
 int main(int argc, char** argv) {
 	int n = atoi(argv[1]);
-	result res(0);
-	fibonacci fib(n, res);
+	Result *res = new Result(0);
+	(new Fibonacci(n, res))->next();
+	delete res;
 }

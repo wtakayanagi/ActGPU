@@ -160,7 +160,6 @@ type_specifier
 	/ int_token
 	/ float_token
 	/ actor_token
-	/ identifier_name
 
 variable_statement
     = type_specifier:type_specifier __ declarations:variable_declaration_list EOS {

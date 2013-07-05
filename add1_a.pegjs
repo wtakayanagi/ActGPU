@@ -8,6 +8,10 @@ source_element
 // add_Lexical
 this_token
 	= "this" !identifier_part {return "this";}
+new_token
+	= "new" !identifier_part {return "new";}
+delete_token
+	= "delete" !identifier_part {return "delete";}
 
 
 // add_Expressions
@@ -255,8 +259,26 @@ postfix_expression
 	/ lefthandside_expression
 
 lefthandside_expression
-	= call_expression
+	= new_expression
+	/ delete_expression
+	/ call_expression
 	/ member_expression
+
+new_expression
+	= new_token __ constructor:actor_declaration {
+		return {
+			type: "NewExpression",
+			constructor: constructor
+		};
+	}
+
+delete_expression
+	= delete_token __ expression:member_expression {
+		return {
+			type: "DeleteExpression",
+			expression: expression
+		};
+	}
 
 call_expression
 	= name:member_expression "(" __ arguments: argument_expression_list? __ ")" {
@@ -528,7 +550,7 @@ actor_declaration_list
 	}
 
 actor_declaration
-	= name:identifier __ "(" __ arguments:argument_expression_list? __ ")" {
+	= name:(actor_token / identifier) __ "(" __ arguments:argument_expression_list? __ ")" {
 		return {
 			type: "ActorDeclaration",
 			name: name,
